@@ -1,0 +1,551 @@
+<title>Enon — поиск CEO: воронка кандидатов</title>
+<style>
+  :root{
+    --bg:#0D1817;
+    --surface:#152220;
+    --surface-2:#1C2B28;
+    --surface-3:#233532;
+    --ink:#F2F6F4;
+    --ink-soft:#A9BAB4;
+    --ink-faint:#6E827C;
+    --line:rgba(255,255,255,.08);
+    --line-strong:rgba(255,255,255,.16);
+
+    --longlist:#5B9BFF;   --longlist-deep:#2F5FC7;
+    --shortlist:#22D3B5;  --shortlist-deep:#0E8F79;
+    --prescreen:#FDC13B;  --prescreen-deep:#A66A1E;
+    --followup:#FF8A4C;   --followup-deep:#C85A2A;
+    --client:#B48CFF;     --client-deep:#6B46C1;
+    --interview:#4ADE80;  --interview-deep:#178A4C;
+    --declined:#FF6B6B;   --declined-deep:#B23B3B;
+
+    --font-display: "Century Gothic", "Avenir Next", "Poppins", ui-sans-serif, system-ui, sans-serif;
+    --font-body: "Segoe UI", -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+  a{ color:inherit; }
+  button{ font-family:inherit; }
+
+  .page{
+    max-width:1440px;
+    margin:0 auto;
+    padding:0 32px 80px;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+  }
+
+  .hero{
+    position:relative;
+    margin:0 -32px 4px;
+    padding:52px 32px 34px;
+    overflow:hidden;
+    border-bottom:1px solid var(--line);
+    background:
+      radial-gradient(600px 260px at 8% -10%, rgba(91,155,255,.20), transparent 60%),
+      radial-gradient(500px 240px at 55% -20%, rgba(34,211,181,.18), transparent 60%),
+      radial-gradient(520px 260px at 92% 0%, rgba(180,140,255,.18), transparent 60%),
+      radial-gradient(400px 220px at 75% 40%, rgba(253,193,59,.10), transparent 65%);
+  }
+  .hero-inner{
+    position:relative;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:24px;
+  }
+  .heading-block{ display:flex; flex-direction:column; gap:8px; max-width:640px; }
+  .eyebrow{
+    font-size:12.5px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--shortlist);
+    font-weight:700;
+  }
+  h1{
+    font-family:var(--font-display);
+    font-size:44px;
+    line-height:1.05;
+    margin:0;
+    font-weight:700;
+    letter-spacing:-0.02em;
+    text-wrap:balance;
+  }
+  .subline{ color:var(--ink-soft); font-size:15px; }
+  .header-meta{ display:flex; gap:28px; flex-wrap:wrap; }
+  .meta-stat{ text-align:right; }
+  .meta-stat .n{
+    font-family:var(--font-display);
+    font-size:32px;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+    line-height:1;
+    display:block;
+  }
+  .meta-stat .l{ font-size:11.5px; color:var(--ink-faint); margin-top:6px; display:block; letter-spacing:.02em; }
+
+  .flow-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 26px 20px;
+  }
+  .flow-card h2{
+    font-family:var(--font-display);
+    font-size:19px;
+    font-weight:700;
+    margin:0 0 2px;
+    letter-spacing:-0.01em;
+  }
+  .flow-sub{ font-size:12.5px; color:var(--ink-faint); display:block; margin-bottom:10px; }
+  .flow-svg{ width:100%; max-width:680px; height:auto; aspect-ratio:760/478; display:block; margin:0 auto; overflow:visible; }
+  .funnel-band{ cursor:pointer; transition:filter .15s ease; }
+  .funnel-band:hover{ filter:brightness(1.12); }
+  .funnel-band:focus-visible{ outline:none; }
+  .funnel-text-n{ font-family:var(--font-display); font-weight:700; font-size:18px; fill:#fff; font-variant-numeric:tabular-nums; pointer-events:none; }
+  .funnel-text-pct{ font-size:11px; font-weight:600; fill:rgba(255,255,255,.78); font-variant-numeric:tabular-nums; pointer-events:none; }
+  .funnel-row-label{ font-size:12.5px; font-weight:600; fill:var(--ink); font-family:var(--font-body); pointer-events:none; }
+  .funnel-row-desc{ font-size:10px; fill:var(--ink-faint); font-family:var(--font-body); pointer-events:none; }
+  .funnel-exit-box{ cursor:pointer; transition:filter .15s ease; }
+  .funnel-exit-box:hover{ filter:brightness(1.12); }
+  .funnel-exit-line{ stroke:var(--declined); stroke-width:1.5; stroke-dasharray:3 4; fill:none; opacity:.7; }
+  .funnel-exit-label{ font-size:9.5px; fill:rgba(255,255,255,.85); font-family:var(--font-body); pointer-events:none; }
+  .funnel-exit-n{ font-family:var(--font-display); font-weight:700; font-size:16px; fill:#fff; font-variant-numeric:tabular-nums; pointer-events:none; }
+
+  .board-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+  .board-head h2{ font-family:var(--font-display); font-size:21px; margin:0; font-weight:700; letter-spacing:-0.01em; }
+  .board-hint{ font-size:12.5px; color:var(--ink-faint); }
+
+  .board{ display:flex; gap:16px; overflow-x:auto; padding-bottom:12px; }
+  .column{
+    flex:0 0 264px;
+    display:flex;
+    flex-direction:column;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+    max-height:80vh;
+    transition:box-shadow .3s ease;
+  }
+  .column.flash{ box-shadow:0 0 0 2px #fff inset; }
+
+  .col-head{
+    padding:14px 15px 12px;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    position:sticky;
+    top:0;
+    z-index:1;
+    color:#0D1817;
+  }
+  .col-head .title-row{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+  .col-head .name{ font-family:var(--font-display); font-size:14.5px; font-weight:700; letter-spacing:.01em; }
+  .col-head .count{ font-family:var(--font-display); font-size:15px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .col-head .desc{ font-size:11px; opacity:.82; line-height:1.3; }
+  .col-head.on-dark{ color:#F7FAF9; }
+
+  .col-body{
+    overflow-y:auto;
+    padding:10px 10px 12px;
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+    background:var(--surface-2);
+  }
+  .col-body:empty::after{ content:"—"; color:var(--ink-faint); font-size:12px; padding:8px; }
+
+  .card{
+    background:var(--surface-3);
+    border-radius:10px;
+    padding:11px 12px 10px;
+    font-size:12.5px;
+    line-height:1.4;
+    border-top:3px solid transparent;
+  }
+  .card .role{ font-weight:700; font-size:13px; }
+  .card .co-pill{
+    display:inline-block;
+    margin-top:6px;
+    padding:2px 8px;
+    border-radius:20px;
+    font-size:10.5px;
+    font-weight:600;
+    letter-spacing:.01em;
+  }
+  .card .foot{ margin-top:8px; }
+  .card .date{ font-size:10.5px; color:var(--ink-faint); font-variant-numeric:tabular-nums; }
+
+  .note-toggle{
+    background:none; border:none; padding:0; margin-top:7px; font-size:11px;
+    color:var(--shortlist); cursor:pointer; text-decoration:underline; text-underline-offset:2px;
+    font-weight:600;
+  }
+  .note-toggle:focus-visible{ outline:2px solid var(--shortlist); outline-offset:2px; border-radius:3px; }
+  .note-body{
+    display:none; margin-top:6px; padding:9px 10px; background:var(--surface-2);
+    border-radius:8px; color:var(--ink-soft); font-size:11.5px; line-height:1.55;
+    white-space:pre-wrap;
+  }
+  .note-body.open{ display:block; }
+
+  footer{ font-size:11.5px; color:var(--ink-faint); padding-top:8px; }
+
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
+
+  @media (max-width:680px){
+    .page{ padding:0 16px 60px; }
+    .hero{ margin:0 -16px 4px; padding:36px 16px 26px; }
+    h1{ font-size:30px; }
+    .hero-inner{ flex-direction:column; align-items:flex-start; }
+    .header-meta{ gap:18px; }
+  }
+</style>
+
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="heading-block">
+        <span class="eyebrow">Evo Talents · поиск для Enon</span>
+        <h1>Chief Executive Officer</h1>
+        <span class="subline">Payments / Fintech · срез воронки на 6 июля 2026</span>
+      </div>
+      <div class="header-meta">
+        <div class="meta-stat"><span class="n" id="stat-total">—</span><span class="l">рассмотрено</span></div>
+        <div class="meta-stat"><span class="n" id="stat-active">—</span><span class="l">в процессе</span></div>
+        <div class="meta-stat"><span class="n" id="stat-declined">—</span><span class="l">отклонено</span></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="flow-card">
+    <h2>Флоу воронки</h2>
+    <span class="flow-sub">Ширина уровня = количество кандидатов на стадии · клик переходит в колонку</span>
+    <svg class="flow-svg" id="flow-svg" viewBox="0 0 760 478"></svg>
+  </section>
+
+  <section>
+    <div class="board-head">
+      <h2>Кандидаты по стадиям</h2>
+      <span class="board-hint">← прокрутка · клик по заметке разворачивает описание</span>
+    </div>
+    <div class="board" id="board"></div>
+  </section>
+
+  <footer>Имена кандидатов скрыты до этапа предоставления профилей. По вопросам — команда Evo Talents.</footer>
+</div>
+
+<script>
+const STAGES = [
+  {
+    key:"longlist", name:"Лонглист", desc:"Собраны, ещё не оценены",
+    bright:"var(--longlist)", deep:"var(--longlist-deep)", deepHex:"#2F5FC7", onDark:true,
+    candidates:[
+      {role:"Chief Operating Officer", co:"Дубай, ОАЭ", added:"30.05", changed:"30.05"},
+    ]
+  },
+  {
+    key:"shortlist", name:"Шортлист", desc:"Прошли первичный отбор",
+    bright:"var(--shortlist)", deep:"var(--shortlist-deep)", deepHex:"#0E8F79", onDark:true,
+    candidates:[
+      {role:"CEO", co:"Финтех, Европа", added:"03.06", changed:"03.06"},
+      {role:"Chief Executive Officer", co:"NDA", added:"03.06", changed:"03.06"},
+      {role:"General Manager (сейчас: частный инвестор)", co:"—", added:"03.06", changed:"03.06"},
+      {role:"CEO", co:"Криптоплатежи", added:"03.06", changed:"03.06"},
+      {role:"Chief Executive Officer", co:"iGaming", added:"03.06", changed:"03.06"},
+      {role:"Compliance Adviser", co:"iGaming Solutions", added:"03.06", changed:"03.06"},
+      {role:"Chief Executive Officer", co:"SaaS", added:"03.06", changed:"03.06"},
+      {role:"Managing Director", co:"Инвестиционный фонд", added:"03.06", changed:"03.06"},
+      {role:"Chief Executive Officer", co:"Криптообмен", added:"03.06", changed:"03.06"},
+      {role:"CEO", co:"Финтех, США", added:"02.06", changed:"02.06"},
+      {role:"Chief Executive Officer", co:"Финтех, Европа", added:"02.06", changed:"02.06"},
+      {role:"Systems Administrator / DevOps", co:"Мальта", added:"05.06.2018", changed:"02.06.2026"},
+      {role:"CEO", co:"Платежи", added:"01.06", changed:"01.06"},
+      {role:"CEO", co:"Финтех", added:"01.06", changed:"01.06"},
+      {role:"Chief Executive Officer", co:"EMI, Европа", added:"01.06", changed:"01.06"},
+      {role:"Партнёр", co:"Платёжный провайдер", added:"01.06", changed:"01.06"},
+      {role:"Chief Executive Officer", co:"Банковский сервис, Европа", added:"31.05", changed:"31.05"},
+      {role:"Group Head of Digital Assets", co:"Инвестиционная платформа", added:"31.05", changed:"31.05"},
+      {role:"CEO of Payments", co:"iGaming-платформа", added:"31.05", changed:"31.05"},
+      {role:"Payment Consultant", co:"—", added:"31.05", changed:"31.05"},
+      {role:"Financial Analyst (сейчас: CEO)", co:"Холдинг", added:"29.05", changed:"29.05"},
+      {role:"CEO", co:"—", added:"29.05", changed:"29.05"},
+      {role:"Trustee & Chair, Finance/Risk Committee", co:"Фонд", added:"29.05", changed:"29.05"},
+      {role:"Chief Operating Officer", co:"—", added:"29.05", changed:"29.05"},
+      {role:"CEO", co:"Финтех, Нидерланды", added:"21.05", changed:"30.05"},
+      {role:"CEO", co:"Платёжная платформа, UK", added:"21.05", changed:"30.05"},
+      {role:"CEO", co:"Платёжный процессинг", added:"21.05", changed:"30.05"},
+      {role:"CEO (сейчас: ex-CEO)", co:"EMI, UK", added:"21.05", changed:"30.05"},
+      {role:"CEO", co:"Платёжная инфраструктура", added:"21.05", changed:"30.05"},
+      {role:"CEO (сейчас: Co-CEO)", co:"Финтех", added:"21.05", changed:"30.05"},
+      {role:"CEO", co:"Платёжный сервис", added:"21.05", changed:"30.05"},
+      {role:"CEO, Board Member", co:"Финтех-платформа", added:"21.05", changed:"30.05"},
+      {role:"CEO", co:"Payments, Европа", added:"21.05", changed:"30.05"},
+    ]
+  },
+  {
+    key:"prescreen", name:"Прескрин", desc:"Первичное интервью — ждём/оцениваем ответ",
+    bright:"var(--prescreen)", deep:"var(--prescreen-deep)", deepHex:"#A66A1E", onDark:false,
+    candidates:[
+      {role:"Chief Operating Officer", co:"iGaming, Европа", added:"03.06", changed:"02.08",
+       note:"Более 6 лет в операционных/комплаенс-ролях в крупных международных iGaming-операторах (в топе рынка по объёму), включая позиции Head of Payments и MLRO/Head of Compliance в течение 4+ лет на мальтийской юрисдикции. Глубокая экспертиза в PSP-управлении, AML/KYC, карточном эквайринге. База в ЕС (Португалия).\n\nОговорка: уровень скорее Head/COO, не полноценный CEO — не управлял компанией целиком."},
+      {role:"Chief Executive Officer", co:"Платёжный сервис", added:"03.06", changed:"01.07", note:"Показать в пн."},
+      {role:"Chief Financial Officer", co:"iGaming (NDA)", added:"03.06", changed:"04.06", note:"Отказ."},
+      {role:"Payments & Fintech Consultant", co:"—", added:"03.06", changed:"02.08",
+       note:"Managing Director в регулируемом FCA e-wallet (вырастил до 1M+ пользователей, 100+ стран, входил в рейтинг быстрорастущих компаний Европы), затем возглавлял бизнес-девелопмент международного PSP с экспансией в iGaming/forex. Экспертиза: card acquiring, IBAN/SEPA, комплаенс по нескольким юрисдикциям (FCA/MGA/UKGC).\n\nСейчас в активном поиске, база — UK, высокая мотивация."},
+      {role:"Chief Executive Officer", co:"Финтех", added:"03.06", changed:"06.07"},
+      {role:"Institutional Strategy Advisor", co:"Институциональный фандинг", added:"01.06", changed:"01.06", note:"Отказать."},
+      {role:"Chief Executive Officer", co:"MarTech", added:"31.05", changed:"01.06", note:"Отказать."},
+      {role:"CEO", co:"NDA", added:"31.05", changed:"01.06", note:"Отказать."},
+      {role:"—", co:"—", added:"29.05", changed:"31.05", note:"Написать 7 июля."},
+      {role:"Head of R&D (сейчас: Partnership Network Director)", co:"NDA", added:"24.05", changed:"30.06",
+       note:"5,5 лет отвечал за R&D в крупной европейской платёжной/партнёрской группе — масштабировал платёжную инфраструктуру с $10M до $40M оборота в месяц, снизил фрод на 89% через ML, построил enterprise payment system с нуля в 50+ странах. Ранее — инвестиционный аналитик в венчурном фонде (14+ fintech-сделок, включая два unicorn-выхода).\n\nОговорка: сильный операционный профиль, но CEO-титула именно в payments пока не было."},
+      {role:"CPO / ExCo-Founder", co:"Холдинг", added:"24.05", changed:"30.06", note:"Он в Минске, английский не флюент, но разговорный — отказать."},
+    ]
+  },
+  {
+    key:"followup", name:"Фоллоу-ап", desc:"На повторном контакте",
+    bright:"var(--followup)", deep:"var(--followup-deep)", deepHex:"#C85A2A", onDark:true,
+    candidates:[
+      {role:"Regional CEO", co:"Крупная iGaming-компания", added:"02.06", changed:"01.07"},
+      {role:"Chief Executive Officer", co:"NDA", added:"02.06", changed:"01.07"},
+      {role:"Business Growth Director", co:"—", added:"29.05", changed:"01.07", note:"Бампнуть 10 июля."},
+      {role:"Chief Revenue Officer", co:"Платёжная платформа", added:"29.05", changed:"01.07", note:"Бампнуть 10 июля."},
+    ]
+  },
+  {
+    key:"client", name:"Отправлен клиенту", desc:"На рассмотрении у Enon",
+    bright:"var(--client)", deep:"var(--client-deep)", deepHex:"#6B46C1", onDark:true,
+    candidates:[
+      {role:"Chief Executive Officer", co:"Солнечная энергетика / финтех", added:"24.05", changed:"03.06",
+       note:"8-кратный рост предыдущего бизнеса в сфере микрофинансирования на уровне борда, построил факторинговую компанию с нуля до €35M годового оборота, продал непрофильный проект как готовый инвестбизнес с €11M pipeline.\n\nОпыт CFO в iGaming-компании (100K+ пользователей) — платёжная и криптоинфраструктура, treasury, FX. Сейчас работает над интеграцией платёжных решений нового поколения (crypto settlement, смарт-контракты)."},
+      {role:"CEO (сейчас: EEA CEO)", co:"Payments, крупный игрок", added:"21.05", changed:"03.06",
+       note:"7.5 лет в одной из крупнейших европейских платёжных групп: 4 года CEO платёжного подразделения, затем 3.5 года региональный CEO. Построил региональное юрлицо с нуля как центр компетенций, запускал продукты в merchant acquiring и digital wallets.\n\nПредседатель отраслевого AML Task Force, эксперт по регуляторике PSD2/EBA. Иностранец, ~50 лет."},
+    ]
+  },
+  {
+    key:"interview", name:"Интервью", desc:"Ближе всего к найму",
+    bright:"var(--interview)", deep:"var(--interview-deep)", deepHex:"#178A4C", onDark:true,
+    candidates:[
+      {role:"Chief Executive Officer", co:"iGaming / беттинг", added:"29.05", changed:"01.08",
+       note:"Вывел проект на €1M объёма ставок в первый месяц после миграции на новую платформу. Ранее — COO в high-risk платёжном шлюзе и 3 года Group Head of Banking & Payments в крупном iGaming-холдинге, отвечал за банковские отношения и платёжную инфраструктуру.\n\nПрямое пересечение iGaming + payments, иностранец. Часть цифр — уточняется на звонке."},
+      {role:"CEO (сейчас: Senior Consultant)", co:"Payments", added:"20.05", changed:"01.08",
+       note:"Масштабировала команду с 8 до 150 человек, построила с нуля коммерческий, комплаенс, HR и финансовый блоки, вывела на рынок 4 продукта. Клиентский оборот компании вырос с $0 до $190.5M в месяц.\n\nКак CEO платёжной платформы запускала интеграции для нескольких крупных национальных цифровых сервисов и маркетплейсов."},
+    ]
+  },
+];
+
+const DECLINED = [
+  {role:"Chief Commercial Officer (CCO)", co:"Global Payment Service Provider (NDA)", added:"03.06", changed:"03.06"},
+  {role:"Chief Executive Officer", co:"—", added:"01.06", changed:"01.07"},
+  {role:"Chief Executive Officer", co:"—", added:"31.05", changed:"02.07"},
+  {role:"Chief Executive Officer", co:"Финтех", added:"29.05", changed:"30.05", note:"Не захотел общаться из-за NDA."},
+  {role:"CEO (сейчас: Deputy CEO)", co:"Маркетплейс", added:"21.05", changed:"30.05"},
+  {role:"Chief Executive Officer", co:"Финтех", added:"21.05", changed:"01.06"},
+];
+
+const total = STAGES.reduce((s,st)=>s+st.candidates.length,0) + DECLINED.length;
+const active = total - DECLINED.length;
+document.getElementById("stat-total").textContent = total;
+document.getElementById("stat-active").textContent = active;
+document.getElementById("stat-declined").textContent = DECLINED.length;
+
+function renderFlow(){
+  const svg = document.getElementById("flow-svg");
+  const ns = "http://www.w3.org/2000/svg";
+  const n = STAGES.length;
+  const counts = STAGES.map(s=>s.candidates.length);
+  const maxCount = Math.max(...counts);
+  const grandTotal = counts.reduce((a,b)=>a+b,0) + DECLINED.length;
+  const pct = c => Math.round((c/grandTotal)*100);
+
+  const minW = 90, maxW = 380;
+  const width = c => minW + (maxW-minW) * (c/maxCount);
+
+  const cx = 300;
+  const bandH = 66, gap = 6;
+  const padTop = 26;
+  const totalH = n*bandH + (n-1)*gap;
+  const svgH = padTop*2 + totalH;
+  svg.setAttribute("viewBox", `0 0 760 ${svgH}`);
+
+  const frag = document.createDocumentFragment();
+
+  STAGES.forEach((s,i)=>{
+    const topW = width(counts[i]);
+    const botW = (i < n-1) ? width(counts[i+1]) : topW;
+    const y0 = padTop + i*(bandH+gap);
+    const y1 = y0 + bandH;
+    const maxRowW = Math.max(topW,botW);
+
+    const g = document.createElementNS(ns,"g");
+    g.setAttribute("tabindex","0");
+    g.setAttribute("role","button");
+    g.addEventListener("click", ()=>focusColumn(s.key));
+    g.addEventListener("keydown",(e)=>{ if(e.key==="Enter") focusColumn(s.key); });
+
+    const pts = [
+      [cx-topW/2, y0], [cx+topW/2, y0],
+      [cx+botW/2, y1], [cx-botW/2, y1]
+    ].map(p=>p.join(",")).join(" ");
+
+    const poly = document.createElementNS(ns,"polygon");
+    poly.setAttribute("points", pts);
+    poly.setAttribute("fill", s.deepHex);
+    poly.setAttribute("class","funnel-band");
+    g.appendChild(poly);
+
+    const numEl = document.createElementNS(ns,"text");
+    numEl.setAttribute("x",cx); numEl.setAttribute("y", (y0+y1)/2 + 1);
+    numEl.setAttribute("text-anchor","middle");
+    numEl.setAttribute("class","funnel-text-n");
+    numEl.textContent = counts[i];
+    g.appendChild(numEl);
+
+    const pctEl = document.createElementNS(ns,"text");
+    pctEl.setAttribute("x",cx); pctEl.setAttribute("y", (y0+y1)/2 + 17);
+    pctEl.setAttribute("text-anchor","middle");
+    pctEl.setAttribute("class","funnel-text-pct");
+    pctEl.textContent = pct(counts[i]) + "%";
+    g.appendChild(pctEl);
+
+    const labelX = cx - maxRowW/2 - 14;
+    const nameEl = document.createElementNS(ns,"text");
+    nameEl.setAttribute("x",labelX); nameEl.setAttribute("y", (y0+y1)/2 - 2);
+    nameEl.setAttribute("text-anchor","end");
+    nameEl.setAttribute("class","funnel-row-label");
+    nameEl.textContent = s.name;
+    g.appendChild(nameEl);
+
+    const descEl = document.createElementNS(ns,"text");
+    descEl.setAttribute("x",labelX); descEl.setAttribute("y", (y0+y1)/2 + 13);
+    descEl.setAttribute("text-anchor","end");
+    descEl.setAttribute("class","funnel-row-desc");
+    descEl.textContent = s.desc;
+    g.appendChild(descEl);
+
+    frag.appendChild(g);
+  });
+
+  const anchorIdx = Math.min(4, n-1);
+  const anchorTopW = width(counts[anchorIdx]);
+  const anchorBotW = (anchorIdx < n-1) ? width(counts[anchorIdx+1]) : anchorTopW;
+  const anchorMaxW = Math.max(anchorTopW, anchorBotW);
+  const anchorY = padTop + anchorIdx*(bandH+gap) + bandH/2;
+  const anchorX = cx + anchorMaxW/2;
+
+  const boxW = 132, boxH = 58;
+  const boxX = 610, boxY = anchorY - boxH/2;
+
+  const line = document.createElementNS(ns,"path");
+  line.setAttribute("class","funnel-exit-line");
+  line.setAttribute("d", `M ${anchorX} ${anchorY} C ${anchorX+70} ${anchorY}, ${boxX-40} ${boxY+boxH/2}, ${boxX} ${boxY+boxH/2}`);
+  frag.appendChild(line);
+
+  const box = document.createElementNS(ns,"g");
+  box.setAttribute("class","funnel-exit-box");
+  box.setAttribute("tabindex","0");
+  box.setAttribute("role","button");
+  box.addEventListener("click", ()=>focusColumn("declined"));
+  box.addEventListener("keydown",(e)=>{ if(e.key==="Enter") focusColumn("declined"); });
+  box.innerHTML = `
+    <rect x="${boxX}" y="${boxY}" width="${boxW}" height="${boxH}" rx="12" fill="#B23B3B"/>
+    <text x="${boxX+boxW/2}" y="${boxY+boxH/2-4}" text-anchor="middle" class="funnel-exit-n">${DECLINED.length} · ${pct(DECLINED.length)}%</text>
+    <text x="${boxX+boxW/2}" y="${boxY+boxH/2+14}" text-anchor="middle" class="funnel-exit-label">ОТКАЗ · СОВОКУПНО</text>
+  `;
+  frag.appendChild(box);
+
+  svg.appendChild(frag);
+}
+renderFlow();
+
+const board = document.getElementById("board");
+
+STAGES.forEach(stage=>{
+  const count = stage.candidates.length;
+
+  const col = document.createElement("div");
+  col.className = "column";
+  col.id = "col-"+stage.key;
+  const head = document.createElement("div");
+  head.className = "col-head" + (stage.onDark ? " on-dark" : "");
+  head.style.background = `linear-gradient(135deg, ${stage.deep}, ${stage.bright})`;
+  head.innerHTML = `
+    <div class="title-row"><span class="name">${stage.name}</span><span class="count">${count}</span></div>
+    <span class="desc">${stage.desc}</span>
+  `;
+  col.appendChild(head);
+
+  const body = document.createElement("div");
+  body.className = "col-body";
+  stage.candidates.forEach(c=> body.appendChild(renderCard(c, stage.bright)));
+  col.appendChild(body);
+
+  board.appendChild(col);
+});
+
+{
+  const col = document.createElement("div");
+  col.className = "column";
+  col.id = "col-declined";
+  const head = document.createElement("div");
+  head.className = "col-head on-dark";
+  head.style.background = `linear-gradient(135deg, var(--declined-deep), var(--declined))`;
+  head.innerHTML = `
+    <div class="title-row"><span class="name">Отказ</span><span class="count">${DECLINED.length}</span></div>
+    <span class="desc">Закрыты без оффера</span>
+  `;
+  col.appendChild(head);
+  const body = document.createElement("div");
+  body.className = "col-body";
+  DECLINED.forEach(c=> body.appendChild(renderCard(c, "var(--declined)")));
+  col.appendChild(body);
+  board.appendChild(col);
+}
+
+function renderCard(c, color){
+  const card = document.createElement("div");
+  card.className = "card";
+  card.style.borderTopColor = color;
+  card.innerHTML = `
+    <div class="role">${c.role}</div>
+    <span class="co-pill" style="background:color-mix(in srgb, ${color} 20%, transparent); color:${color}">${c.co}</span>
+    <div class="foot"><span class="date">на этапе с ${c.changed || c.added}</span></div>
+  `;
+  if(c.note){
+    const btn = document.createElement("button");
+    btn.className = "note-toggle";
+    btn.type = "button";
+    btn.textContent = "Описание ▸";
+    const note = document.createElement("div");
+    note.className = "note-body";
+    note.textContent = c.note;
+    btn.addEventListener("click", ()=>{
+      note.classList.toggle("open");
+      btn.textContent = note.classList.contains("open") ? "Описание ▾" : "Описание ▸";
+    });
+    card.appendChild(btn);
+    card.appendChild(note);
+  }
+  return card;
+}
+
+function focusColumn(key){
+  const col = document.getElementById("col-"+key);
+  if(!col) return;
+  col.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? "auto" : "smooth", inline:"center", block:"nearest"});
+  col.classList.add("flash");
+  setTimeout(()=>col.classList.remove("flash"), 900);
+}
+</script>
